@@ -23,3 +23,5 @@ using the instance mapping built by the Cull kernel.
 
 Object positions are packed into two `uint` fields (`PositionXZ` and `PositionY_MeshIdx`)
 to minimize GPU memory bandwidth.
+
+![Screenshot](README_files/screenshot.png)
