@@ -1,0 +1,135 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Clean
+#pragma kernel Cull
+
+// input
+
+struct MeshInfo
+{
+    uint FirstIndex;
+    uint Indexes;
+    uint FirstVertex;
+    uint Vertexes;
+};
+StructuredBuffer<MeshInfo> _MeshInfoBuffer;
+uint _MeshCount;
+
+struct Obj
+{
+    uint3 Position;
+    uint MeshId;    // == draw call id
+};
+struct RawObject
+{
+    uint PositionXZ;
+    uint PositionY_MeshIdx;
+};
+Obj UnpackObj(RawObject rawObj)
+{
+    Obj obj;
+    obj.Position.x = rawObj.PositionXZ & 0x0000FFFFu;
+    obj.Position.y = rawObj.PositionY_MeshIdx & 0x0000FFFFu;
+    obj.Position.z = (rawObj.PositionXZ & 0xFFFF0000u) >> 16u;
+    obj.MeshId = (rawObj.PositionY_MeshIdx & 0xFFFF0000u) >> 16u;
+    return obj;
+}
+StructuredBuffer<RawObject> _Objects;
+uint _ObjectCount;
+
+uint _MaxInstancesPerDrawCall; // const
+
+StructuredBuffer<float4> _CameraPlanes;
+
+// output
+
+struct DrawCall
+{
+    uint vertexCount;
+    uint instanceCount;
+    uint firstVertex;
+    uint instanceLocation;
+};
+RWStructuredBuffer<DrawCall> _DrawCalls;
+
+RWStructuredBuffer<uint> _InstanceMappingBuffer;
+
+// kernels
+
+[numthreads(64, 1, 1)]
+void Clean(uint3 id : SV_DispatchThreadID)
+{
+    uint drawCallIDx = id.x;
+    uint meshIdx = id.x;
+    uint maxDrawCalls = _MeshCount;
+    if (drawCallIDx >= maxDrawCalls)
+    {
+        return;
+    }
+
+    _DrawCalls[drawCallIDx].vertexCount = _MeshInfoBuffer[meshIdx].Indexes;
+    _DrawCalls[drawCallIDx].instanceCount = 0u;
+    _DrawCalls[drawCallIDx].firstVertex = _MeshInfoBuffer[meshIdx].FirstIndex;
+    _DrawCalls[drawCallIDx].instanceLocation = drawCallIDx * _MaxInstancesPerDrawCall;
+}
+
+float4 DecodePositionAndBBRadiusSqrWS(uint3 position)
+{
+    float3 minPositionWS = float3(0.0, 0.0, 0.0);   // TODO:
+    float3 cellSizeWS = float3(1.0, 1.0, 1.0);  // TODO:
+    float3 positionWS = minPositionWS + position * cellSizeWS;
+
+    float bbRadiusWS = 1.5; // TODO:
+    float bbRadiusSqrWS = bbRadiusWS * bbRadiusWS;
+    
+    return float4(positionWS, bbRadiusSqrWS);
+}
+
+bool IsInsidePlane(float4 plane, float3 positionWS, float bbRadiusSqrWS)
+{
+    return dot(plane.xyz, positionWS) + plane.w >= -bbRadiusSqrWS;
+}
+
+bool IsVisible(float3 positionWS, float bbRadiusSqrWS)
+{
+    for (uint i = 0u; i < 6u; i++)
+    {
+        if (!IsInsidePlane(_CameraPlanes[i], positionWS, bbRadiusSqrWS))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+[numthreads(64, 1, 1)]
+void Cull(uint3 id : SV_DispatchThreadID)
+{
+    uint objIdx = id.x;
+    if (objIdx >= _ObjectCount)
+    {
+        return;
+    }
+    
+    Obj obj = UnpackObj(_Objects[objIdx]);
+    if (obj.MeshId == 0)    // removed object
+    {
+        return;
+    }
+    
+    float4 positionAndBBRadiusSqrWS = DecodePositionAndBBRadiusSqrWS(obj.Position);
+    if (!IsVisible(positionAndBBRadiusSqrWS.xyz, positionAndBBRadiusSqrWS.w))
+    {
+        return;
+    }
+    
+    uint drawCallIdx = obj.MeshId - 1u;
+    uint isntances;
+    InterlockedAdd(_DrawCalls[drawCallIdx].instanceCount, 1u, isntances);
+
+    if (isntances < _MaxInstancesPerDrawCall)
+    {
+        uint instanceIdxInMap = drawCallIdx * _MaxInstancesPerDrawCall + isntances;
+        uint instanceIdx = objIdx;
+        _InstanceMappingBuffer[instanceIdxInMap] = instanceIdx;
+    }
+}
