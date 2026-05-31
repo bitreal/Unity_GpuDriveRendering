@@ -17,6 +17,7 @@ struct InstanceData
 };
 StructuredBuffer<InstanceData> _InstanceBuffer;
 StructuredBuffer<uint> _InstanceMappingBuffer;
+int _InstanceOffset;
 
 struct DrawCall
 {

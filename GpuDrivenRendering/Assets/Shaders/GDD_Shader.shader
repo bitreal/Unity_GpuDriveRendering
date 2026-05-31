@@ -38,7 +38,7 @@ Shader "Unlit/GDD_Shader"
                 Varyings output;
 
                 VertexData vertexData = _VertexBuffer[_IndexBuffer[input.vertexId]];
-                InstanceData instanceData = _InstanceBuffer[_InstanceMappingBuffer[input.instanceId]];
+                InstanceData instanceData = _InstanceBuffer[_InstanceMappingBuffer[_InstanceOffset + input.instanceId]];
                 float3 positionWS = vertexData.PositionOS.xyz * 50.0 + instanceData.PositionWS.xyz;
                 output.positionCS = mul(unity_MatrixVP, float4(positionWS, 1.0));
                 output.color = instanceData.Color.rgb * (dot(vertexData.NormalOS.xyz, half3(0.0, 1.0, 0.0)) * 0.5 + 0.5);

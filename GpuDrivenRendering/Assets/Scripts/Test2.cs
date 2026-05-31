@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class Chunks : MonoBehaviour
+public class Test2 : MonoBehaviour
 {
     [SerializeField]
     private Transform _player;

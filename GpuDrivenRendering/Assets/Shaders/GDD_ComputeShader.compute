@@ -58,18 +58,18 @@ RWStructuredBuffer<uint> _InstanceMappingBuffer;
 [numthreads(64, 1, 1)]
 void Clean(uint3 id : SV_DispatchThreadID)
 {
-    uint drawCallIDx = id.x;
+    uint drawCallIdx = id.x;
     uint meshIdx = id.x;
     uint maxDrawCalls = _MeshCount;
-    if (drawCallIDx >= maxDrawCalls)
+    if (drawCallIdx >= maxDrawCalls)
     {
         return;
     }
 
-    _DrawCalls[drawCallIDx].vertexCount = _MeshInfoBuffer[meshIdx].Indexes;
-    _DrawCalls[drawCallIDx].instanceCount = 0u;
-    _DrawCalls[drawCallIDx].firstVertex = _MeshInfoBuffer[meshIdx].FirstIndex;
-    _DrawCalls[drawCallIDx].instanceLocation = drawCallIDx * _MaxInstancesPerDrawCall;
+    _DrawCalls[drawCallIdx].vertexCount = _MeshInfoBuffer[meshIdx].Indexes;
+    _DrawCalls[drawCallIdx].instanceCount = 0u;
+    _DrawCalls[drawCallIdx].firstVertex = _MeshInfoBuffer[meshIdx].FirstIndex;
+    _DrawCalls[drawCallIdx].instanceLocation = drawCallIdx * _MaxInstancesPerDrawCall;
 }
 
 float4 DecodePositionAndBBRadiusSqrWS(uint3 position)

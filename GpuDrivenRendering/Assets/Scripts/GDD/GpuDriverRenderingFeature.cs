@@ -106,13 +106,13 @@ public class GpuDriverRenderingPass : ScriptableRenderPass
 
     private Material _material;
 
-    private const int MAX_MESHES = 1000;
-    private const int MAX_VERTEXES = 5_000;
+    private const int MAX_MESHES = 100;
+    private const int MAX_VERTEXES = 100_000;
     private const int MAX_INDEXES = MAX_VERTEXES * 3;
-    private const int MAX_VERTEXES_PER_MESH = 10_000;
+    private const int MAX_VERTEXES_PER_MESH = 5_000;
     private const int MAX_INDEXES_PER_MESH = MAX_VERTEXES_PER_MESH * 3;
-    private const int MAX_OBJECTS = 1_500_000;
-    private const int MAX_INSTANCES_PER_DRAW_CALL = 1023;  // unity can't more
+    private const int MAX_OBJECTS = 2_000_000;
+    private const int MAX_INSTANCES_PER_DRAW_CALL = MAX_OBJECTS;
 
     public static GpuDriverRenderingPass Instance { get; private set; }
     public GpuDriverRenderingPassStats Stats { get; } = new GpuDriverRenderingPassStats();
@@ -260,7 +260,7 @@ public class GpuDriverRenderingPass : ScriptableRenderPass
         }
         else
         {
-            // it's a first mesh
+            // the first mesh
         }
         var firstIndex = lastMeshInfo.FirstIndex + lastMeshInfo.Indexes;
         var firstVertex = lastMeshInfo.FirstVertex + lastMeshInfo.Vertexes;
@@ -533,6 +533,7 @@ public class GpuDriverRenderingPass : ScriptableRenderPass
             // render
             for(var i = 0; i < _meshCount; i++)
             {
+                cmdBuffer.SetGlobalInt("_InstanceOffset", i * MAX_INSTANCES_PER_DRAW_CALL);
                 var argsOffset = i * DrawCall.Size;
                 cmdBuffer.DrawProceduralIndirect(Matrix4x4.identity, _material, 0, MeshTopology.Triangles, _drawCallBuffer, argsOffset);
             }

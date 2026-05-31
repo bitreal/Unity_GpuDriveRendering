@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Active: 1
   _settings:
-    _material: {fileID: 2100000, guid: a1ff5c4a6a182074790593a59811fe30, type: 2}
-    _mesh: {fileID: -309704533704486340, guid: e66faac10349c9342a6966a778cb118a, type: 3}
     _computeShader: {fileID: 7200000, guid: 7fa2cb17b53692a42a56290275f10007, type: 3}
+    _material: {fileID: 2100000, guid: a1ff5c4a6a182074790593a59811fe30, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

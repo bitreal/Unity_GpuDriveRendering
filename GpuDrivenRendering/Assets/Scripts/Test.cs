@@ -13,6 +13,8 @@ public class Test : MonoBehaviour
     private int _meshes;
     [SerializeField]
     private int3 _gridSize;
+    [SerializeField]
+    private Transform _cameraRig;
 
     private IEnumerator Start()
     {
@@ -70,5 +72,8 @@ public class Test : MonoBehaviour
                 }
             }
         }
+
+        var center = new Vector3(_gridSize.x, 0f, _gridSize.z) * 0.5f;
+        _cameraRig.position = center;
     }
 }
